@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafema — Graph-Driven Development</title>
+    <meta name="description" content="Represent your codebase as a queryable graph. Define guarantees, track dependencies, catch violations before they ship.">
+    <meta name="theme-color" content="#0a0e17">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 173 196' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='%2300D9FF' stroke-width='2.5' fill='%2300D9FF'%3E%3Cpath d='M86 3.14 L166.61 49.95 L166.35 68.72 H155.31 L155.06 56.36 L86 16.4 L16.61 58.12 L16.13 139.89 L86 180.58 L154.76 140.3 L155.07 102.45 L92.96 101.98 L92.71 111.75 H82.66 L82.21 90.74 L166.03 91.21 L165.87 147.59 L86 194.12 L4.18 145.43 L4.87 51.79 Z'/%3E%3Cpath d='M86 33.74 L139.59 64.66 L139.59 68.48 H123.01 L86 46.77 L42.67 72.21 L42.28 125.69 L86 150.75 L129.32 125.46 L129.51 116.98 H140.04 L140.14 133 L86 163.65 L30.65 131.75 L30.73 65.89 Z'/%3E%3C/g%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0e17;
+            --cyan: #00D9FF;
+            --cyan-dim: rgba(0, 217, 255, 0.5);
+            --cyan-glow: rgba(0, 217, 255, 0.3);
+            --cyan-subtle: rgba(0, 217, 255, 0.12);
+            --text: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.65);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            filter: drop-shadow(0 0 12px var(--cyan-glow));
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--cyan);
+            letter-spacing: 0.01em;
+            text-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem 2rem 4rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--cyan);
+            background: var(--cyan-subtle);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 100px;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--cyan);
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 6vw, 3.75rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 1.25rem;
+        }
+
+        .description {
+            font-size: clamp(1rem, 2vw, 1.15rem);
+            color: var(--text-secondary);
+            max-width: 560px;
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.25s ease;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary {
+            background: var(--cyan);
+            color: var(--bg);
+            border: 1px solid var(--cyan);
+            box-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        .btn-primary:hover {
+            background: #fff;
+            border-color: #fff;
+            box-shadow: 0 0 30px var(--cyan-glow);
+            transform: translateY(-1px);
+        }
+
+        .decoration {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 24px;
+            height: 24px;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 640px) {
+            header { padding: 1rem 1.5rem; }
+            main { padding: 1.5rem 1.5rem 3rem; }
+            .buttons { flex-direction: column; width: 100%; max-width: 280px; }
+            .btn { justify-content: center; }
+            .decoration { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="wrapper">
+        <header>
+            <div class="logo-container">
+                <!-- Grafema Logo -->
+                <svg class="logo" viewBox="0 0 173 196" xmlns="http://www.w3.org/2000/svg">
+                    <g stroke="#00D9FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#00D9FF">
+                        <!-- Outer hexagon with G cutout -->
+                        <path d="M86 3.14 L166.61 49.95 L166.35 68.72 H155.31 L155.06 56.36 L86 16.4 L16.61 58.12 L16.13 139.89 L86 180.58 L154.76 140.3 L155.07 102.45 L92.96 101.98 L92.71 111.75 H82.66 L82.21 90.74 L166.03 91.21 L165.87 147.59 L86 194.12 L4.18 145.43 L4.87 51.79 Z"/>
+                        <!-- Inner hexagon with G cutout -->
+                        <path d="M86 33.74 L139.59 64.66 L139.59 68.48 H123.01 L86 46.77 L42.67 72.21 L42.28 125.69 L86 150.75 L129.32 125.46 L129.51 116.98 H140.04 L140.14 133 L86 163.65 L30.65 131.75 L30.73 65.89 Z"/>
+                    </g>
+                </svg>
+                <span class="logo-text">grafema</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="badge">In Development</div>
+            <h1>Graph-Driven Development</h1>
+            <p class="description">
+                Represent your codebase as a queryable graph.
+                Define guarantees, track dependencies, catch violations before they ship.
+            </p>
+            <div class="buttons">
+                <a href="https://github.com/Disentinel/grafema" class="btn btn-secondary" target="_blank" rel="noopener">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    View on GitHub
+                </a>
+                <a href="https://doi.org/10.5281/zenodo.18247579" class="btn btn-primary" target="_blank" rel="noopener">
+                    Read the Paper
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 17L17 7"/><path d="M7 7h10v10"/>
+                    </svg>
+                </a>
+            </div>
+        </main>
+
+        <svg class="decoration" viewBox="0 0 40 40" fill="none">
+            <path d="M20 0 L26 14 L40 20 L26 26 L20 40 L14 26 L0 20 L14 14 Z" fill="#00D9FF"/>
+        </svg>
+    </div>
+
+    <script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { Line2 } from 'three/addons/lines/Line2.js';
+        import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+        import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+
+        const CONFIG = {
+            nodeCount: 100,
+            connectionDistance: 3.2,
+            hexSizeMin: 0.08,
+            hexSizeMax: 0.4,
+            driftSpeed: 0.0003,
+            edgeNoiseScale: 0.2,
+            edgeNoiseSpeed: 1.2,
+            bloomStrength: 0.8,
+            bloomRadius: 0.5,
+            bloomThreshold: 0.2,
+            nodeOpacityMin: 0.2,
+            nodeOpacityMax: 0.4,
+            edgeOpacityMin: 0.2,
+            edgeOpacityMax: 0.4,
+            cyanColor: 0x00D9FF,
+            bgColor: 0x0a0e17
+        };
+
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(CONFIG.bgColor);
+        scene.fog = new THREE.Fog(CONFIG.bgColor, 4, 18);
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 12);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        container.appendChild(renderer.domElement);
+
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        composer.addPass(new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            CONFIG.bloomStrength, CONFIG.bloomRadius, CONFIG.bloomThreshold
+        ));
+
+        // Hexagon outline with thick lines using Line2
+        function createHexagonGeometry(radius) {
+            const positions = [];
+            for (let i = 0; i <= 6; i++) {
+                const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+                positions.push(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+            }
+            const geometry = new LineGeometry();
+            geometry.setPositions(positions);
+            return geometry;
+        }
+
+        const nodes = [];
+        for (let i = 0; i < CONFIG.nodeCount; i++) {
+            const size = CONFIG.hexSizeMin + Math.random() * (CONFIG.hexSizeMax - CONFIG.hexSizeMin);
+            const hexGeometry = createHexagonGeometry(size);
+            const baseOpacity = CONFIG.nodeOpacityMin + Math.random() * (CONFIG.nodeOpacityMax - CONFIG.nodeOpacityMin);
+
+            const mat = new LineMaterial({
+                color: CONFIG.cyanColor,
+                linewidth: 2 + Math.random() * 2,
+                transparent: true,
+                opacity: baseOpacity,
+                resolution: new THREE.Vector2(window.innerWidth, window.innerHeight)
+            });
+
+            const hex = new Line2(hexGeometry, mat);
+            hex.computeLineDistances();
+            hex.position.set(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 14,
+                (Math.random() - 0.5) * 10
+            );
+            hex.rotation.z = Math.random() * Math.PI;
+            hex.userData.velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * CONFIG.driftSpeed,
+                (Math.random() - 0.5) * CONFIG.driftSpeed,
+                (Math.random() - 0.5) * CONFIG.driftSpeed * 0.5
+            );
+            hex.userData.baseOpacity = baseOpacity;
+            hex.userData.rotationSpeed = (Math.random() - 0.5) * 0.004;
+            hex.userData.noiseOffset = Math.random() * 1000;
+            hex.userData.pulseSpeed = 0.3 + Math.random() * 1.0;
+            hex.userData.size = size; // Store size for edge trimming
+            scene.add(hex);
+            nodes.push(hex);
+        }
+
+        const edgesGroup = new THREE.Group();
+        scene.add(edgesGroup);
+
+        // Simple noise
+        const perm = new Uint8Array(512);
+        for (let i = 0; i < 256; i++) perm[i] = perm[i + 256] = Math.floor(Math.random() * 256);
+
+        function noise(x, y, z) {
+            const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+            x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+            const u = x * x * (3 - 2 * x), v = y * y * (3 - 2 * y), w = z * z * (3 - 2 * z);
+            const A = perm[X] + Y, B = perm[X + 1] + Y;
+            const AA = perm[A] + Z, AB = perm[A + 1] + Z, BA = perm[B] + Z, BB = perm[B + 1] + Z;
+            return (1 - w) * ((1 - v) * ((1 - u) * perm[AA] + u * perm[BA]) + v * ((1 - u) * perm[AB] + u * perm[BB])) +
+                   w * ((1 - v) * ((1 - u) * perm[AA + 1] + u * perm[BA + 1]) + v * ((1 - u) * perm[AB + 1] + u * perm[BB + 1]));
+        }
+
+        const edgeMat = new THREE.LineBasicMaterial({
+            color: CONFIG.cyanColor,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+
+        let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+        document.addEventListener('mousemove', e => {
+            targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+            targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        // Pre-create edge pool for reuse
+        const maxEdges = 250;
+        const edgePool = [];
+        for (let i = 0; i < maxEdges; i++) {
+            const geo = new THREE.BufferGeometry();
+            const mat = edgeMat.clone();
+            const line = new THREE.Line(geo, mat);
+            line.visible = false;
+            edgesGroup.add(line);
+            edgePool.push(line);
+        }
+
+        let time = 0;
+        let lastTime = performance.now();
+
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+
+            const delta = Math.min((currentTime - lastTime) / 1000, 0.05);
+            lastTime = currentTime;
+            time += delta;
+
+            mouseX += (targetX - mouseX) * delta * 2;
+            mouseY += (targetY - mouseY) * delta * 2;
+            camera.position.x = mouseX * 0.6;
+            camera.position.y = -mouseY * 0.4;
+            camera.lookAt(0, 0, 0);
+
+            // Update nodes
+            const velDelta = delta * 0.5;
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i];
+                n.userData.velocity.x += (Math.random() - 0.5) * 0.0001 * velDelta;
+                n.userData.velocity.y += (Math.random() - 0.5) * 0.0001 * velDelta;
+                n.userData.velocity.clampLength(0, CONFIG.driftSpeed * 2);
+                n.position.addScaledVector(n.userData.velocity, delta * 60);
+
+                const d = n.position.length();
+                if (d > 8) {
+                    n.userData.velocity.addScaledVector(n.position.clone().normalize(), -0.00005 * velDelta);
+                }
+                n.rotation.z += n.userData.rotationSpeed * delta * 60;
+
+                // Noise-based opacity variation
+                const noiseVal = noise(
+                    n.position.x * 0.5 + time * 0.2,
+                    n.position.y * 0.5 + n.userData.noiseOffset,
+                    time * n.userData.pulseSpeed * 0.5
+                ) / 256;
+                n.material.opacity = n.userData.baseOpacity * (0.5 + noiseVal);
+            }
+
+            // Update edges using pool - edges stop at hexagon boundaries
+            let edgeCount = 0;
+            const segs = 8;
+            const tempPts = new Float32Array((segs + 1) * 3);
+
+            for (let i = 0; i < nodes.length && edgeCount < maxEdges; i++) {
+                for (let j = i + 1; j < nodes.length && edgeCount < maxEdges; j++) {
+                    const n1 = nodes[i], n2 = nodes[j];
+                    const p1 = n1.position, p2 = n2.position;
+                    const dx = p2.x - p1.x, dy = p2.y - p1.y, dz = p2.z - p1.z;
+                    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                    if (dist < CONFIG.connectionDistance) {
+                        // Calculate t values where line exits each hexagon boundary
+                        const r1 = n1.userData.size * 1.1; // Slight padding
+                        const r2 = n2.userData.size * 1.1;
+                        const t1 = r1 / dist; // Start t (after leaving hex1)
+                        const t2 = 1 - r2 / dist; // End t (before entering hex2)
+
+                        // Skip if hexagons overlap
+                        if (t1 >= t2) continue;
+
+                        const nt = time * CONFIG.edgeNoiseSpeed;
+
+                        for (let k = 0; k <= segs; k++) {
+                            // Map k from [0, segs] to [t1, t2]
+                            const t = t1 + (k / segs) * (t2 - t1);
+                            const x = p1.x + dx * t;
+                            const y = p1.y + dy * t;
+                            const z = p1.z + dz * t;
+
+                            // Envelope: fade at both ends, strongest in middle
+                            const localT = k / segs;
+                            const env = Math.sin(localT * Math.PI) * CONFIG.edgeNoiseScale;
+                            const nx = (noise(x * 2 + nt, y * 2, z * 2) / 128 - 1) * env;
+                            const ny = (noise(x * 2, y * 2 + nt, z * 2) / 128 - 1) * env;
+                            tempPts[k * 3] = x + nx;
+                            tempPts[k * 3 + 1] = y + ny;
+                            tempPts[k * 3 + 2] = z;
+                        }
+
+                        const line = edgePool[edgeCount];
+                        line.geometry.setAttribute('position', new THREE.BufferAttribute(tempPts.slice(), 3));
+                        const edgeOpacity = CONFIG.edgeOpacityMin + (i * j % 10) / 10 * (CONFIG.edgeOpacityMax - CONFIG.edgeOpacityMin);
+                        line.material.opacity = (1 - dist / CONFIG.connectionDistance) * edgeOpacity;
+                        line.visible = true;
+                        edgeCount++;
+                    }
+                }
+            }
+
+            // Hide unused edges
+            for (let i = edgeCount; i < maxEdges; i++) {
+                edgePool[i].visible = false;
+            }
+
+            composer.render();
+        }
+
+        animate(performance.now());
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            // Update LineMaterial resolution
+            const res = new THREE.Vector2(window.innerWidth, window.innerHeight);
+            nodes.forEach(n => n.material.resolution = res);
+        });
+    </script>
+</body>
+</html>
