@@ -85,6 +85,14 @@
             height: 100%;
         }
 
+        /* Rounded corners for SVG logos */
+        .logo-icon svg g {
+            filter: url(#round-corners-small);
+        }
+        .screensaver svg g {
+            filter: url(#round-corners-large);
+        }
+
         .logo-text {
             font-size: 24px;
             font-weight: 500;
@@ -300,6 +308,22 @@
     </style>
 </head>
 <body>
+    <!-- SVG filters for rounded corners -->
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <!-- Small logo filter (gentler) -->
+            <filter id="round-corners-small" x="-10%" y="-10%" width="120%" height="120%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur" />
+                <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" />
+            </filter>
+            <!-- Large logo filter (stronger) -->
+            <filter id="round-corners-large" x="-10%" y="-10%" width="120%" height="120%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
+                <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" />
+            </filter>
+        </defs>
+    </svg>
+
     <canvas id="canvas-blur-back"></canvas>
     <canvas id="canvas-blur-mid"></canvas>
     <canvas id="canvas-sharp"></canvas>
@@ -383,6 +407,15 @@
         screensaver.addEventListener('click', () => {
             document.body.classList.remove('screensaver-active');
         });
+
+        // === GLOBAL SETTINGS ===
+        const HEX_CORNER_RADIUS = 8; // Corner radius for all hexagons (0 = sharp corners)
+
+        // Apply rounded corners to SVG logos via blur+threshold filter
+        const smallBlur = document.querySelector('#round-corners-small feGaussianBlur');
+        const largeBlur = document.querySelector('#round-corners-large feGaussianBlur');
+        if (smallBlur) smallBlur.setAttribute('stdDeviation', HEX_CORNER_RADIUS * 0.1);
+        if (largeBlur) largeBlur.setAttribute('stdDeviation', HEX_CORNER_RADIUS * 0.2);
 
         // Seeded random number generator
         let seed = 956637;
@@ -486,14 +519,39 @@
                 }
 
                 ctx.beginPath();
+                const vertices = [];
                 for (let i = 0; i < 6; i++) {
                     const angle = (Math.PI / 3) * i - Math.PI / 2;
-                    const x = Math.cos(angle) * this.size;
-                    const y = Math.sin(angle) * this.size;
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
+                    vertices.push({
+                        x: Math.cos(angle) * this.size,
+                        y: Math.sin(angle) * this.size
+                    });
+                }
+
+                if (HEX_CORNER_RADIUS > 0) {
+                    // Draw hexagon with rounded corners using arcTo
+                    for (let i = 0; i < 6; i++) {
+                        const curr = vertices[i];
+                        const next = vertices[(i + 1) % 6];
+                        if (i === 0) {
+                            // Start from midpoint of first edge
+                            const prev = vertices[5];
+                            const startX = prev.x + (curr.x - prev.x) * 0.5;
+                            const startY = prev.y + (curr.y - prev.y) * 0.5;
+                            ctx.moveTo(startX, startY);
+                            ctx.arcTo(curr.x, curr.y, next.x, next.y, HEX_CORNER_RADIUS);
+                        } else {
+                            ctx.arcTo(curr.x, curr.y, next.x, next.y, HEX_CORNER_RADIUS);
+                        }
+                    }
+                } else {
+                    // Sharp corners
+                    for (let i = 0; i < 6; i++) {
+                        if (i === 0) {
+                            ctx.moveTo(vertices[i].x, vertices[i].y);
+                        } else {
+                            ctx.lineTo(vertices[i].x, vertices[i].y);
+                        }
                     }
                 }
                 ctx.closePath();
