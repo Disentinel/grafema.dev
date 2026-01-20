@@ -76,13 +76,13 @@
             width: 40px;
             height: 40px;
             position: relative;
-            filter: drop-shadow(0 0 8px rgba(94, 231, 231, 0.6)) drop-shadow(0 0 20px rgba(94, 231, 231, 0.4));
             animation: neonFlicker 4s ease-in-out infinite;
         }
 
         .logo-icon svg {
             width: 100%;
             height: 100%;
+            filter: url(#hex-glow-small);
         }
 
         /* Rounded corners for SVG logos */
@@ -261,29 +261,8 @@
         .screensaver svg {
             width: 200px;
             height: 227px;
-            filter:
-                drop-shadow(0 0 10px rgba(94, 231, 231, 0.9))
-                drop-shadow(0 0 30px rgba(94, 231, 231, 0.7))
-                drop-shadow(0 0 60px rgba(94, 231, 231, 0.5))
-                drop-shadow(0 0 100px rgba(94, 231, 231, 0.3));
-            animation: neonPulse 3s ease-in-out infinite, neonFlickerStrong 6s ease-in-out infinite;
-        }
-
-        @keyframes neonPulse {
-            0%, 100% {
-                filter:
-                    drop-shadow(0 0 10px rgba(94, 231, 231, 0.9))
-                    drop-shadow(0 0 30px rgba(94, 231, 231, 0.7))
-                    drop-shadow(0 0 60px rgba(94, 231, 231, 0.5))
-                    drop-shadow(0 0 100px rgba(94, 231, 231, 0.3));
-            }
-            50% {
-                filter:
-                    drop-shadow(0 0 15px rgba(94, 231, 231, 1))
-                    drop-shadow(0 0 40px rgba(94, 231, 231, 0.8))
-                    drop-shadow(0 0 80px rgba(94, 231, 231, 0.6))
-                    drop-shadow(0 0 120px rgba(94, 231, 231, 0.4));
-            }
+            filter: url(#hex-glow-large);
+            animation: neonFlickerStrong 6s ease-in-out infinite;
         }
 
         @keyframes neonFlickerStrong {
@@ -305,21 +284,53 @@
         .logo {
             cursor: pointer;
         }
+
     </style>
 </head>
 <body>
-    <!-- SVG filters for rounded corners -->
+    <!-- SVG filters -->
     <svg width="0" height="0" style="position: absolute;">
         <defs>
-            <!-- Small logo filter (gentler) -->
+            <!-- Rounded corners filters -->
             <filter id="round-corners-small" x="-10%" y="-10%" width="120%" height="120%">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur" />
                 <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" />
             </filter>
-            <!-- Large logo filter (stronger) -->
             <filter id="round-corners-large" x="-10%" y="-10%" width="120%" height="120%">
                 <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
                 <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" />
+            </filter>
+
+            <!-- Hex-shaped glow for small logo -->
+            <filter id="hex-glow-small" x="-50%" y="-50%" width="200%" height="200%">
+                <feMorphology operator="dilate" radius="1" in="SourceGraphic" result="dilated" />
+                <feGaussianBlur in="dilated" stdDeviation="2" result="blur1" />
+                <feColorMatrix in="blur1" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.55 0" result="glow1" />
+                <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur2" />
+                <feColorMatrix in="blur2" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.35 0" result="glow2" />
+                <feMerge>
+                    <feMergeNode in="glow2" />
+                    <feMergeNode in="glow1" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+
+            <!-- Hex-shaped glow for large logo -->
+            <filter id="hex-glow-large" x="-100%" y="-100%" width="300%" height="300%">
+                <feMorphology operator="dilate" radius="1.2" in="SourceGraphic" result="dilated1" />
+                <feGaussianBlur in="dilated1" stdDeviation="3" result="blur1" />
+                <feColorMatrix in="blur1" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.65 0" result="glow1" />
+                <feMorphology operator="dilate" radius="0.6" in="SourceGraphic" result="dilated2" />
+                <feGaussianBlur in="dilated2" stdDeviation="8" result="blur2" />
+                <feColorMatrix in="blur2" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.45 0" result="glow2" />
+                <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blur3" />
+                <feColorMatrix in="blur3" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.25 0" result="glow3" />
+                <feMerge>
+                    <feMergeNode in="glow3" />
+                    <feMergeNode in="glow2" />
+                    <feMergeNode in="glow1" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
             </filter>
         </defs>
     </svg>
@@ -407,6 +418,12 @@
         screensaver.addEventListener('click', () => {
             document.body.classList.remove('screensaver-active');
         });
+
+        // Intro: start in screensaver mode, exit after 1 second
+        document.body.classList.add('screensaver-active');
+        setTimeout(() => {
+            document.body.classList.remove('screensaver-active');
+        }, 1000);
 
         // === GLOBAL SETTINGS ===
         const HEX_CORNER_RADIUS = 8; // Corner radius for all hexagons (0 = sharp corners)
@@ -502,50 +519,33 @@
                 this.currentLayer += (this.targetLayer - this.currentLayer) * 0.1;
             }
 
-            draw(ctx) {
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.rotation);
-
-                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 2);
-                gradient.addColorStop(0, `rgba(94, 231, 231, ${this.opacity * 0.5})`);
-                gradient.addColorStop(1, 'rgba(94, 231, 231, 0)');
-
-                if (this.glowIntensity > 0.7) {
-                    ctx.fillStyle = gradient;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.size * 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                ctx.beginPath();
+            drawHexPath(ctx, size) {
                 const vertices = [];
                 for (let i = 0; i < 6; i++) {
                     const angle = (Math.PI / 3) * i - Math.PI / 2;
                     vertices.push({
-                        x: Math.cos(angle) * this.size,
-                        y: Math.sin(angle) * this.size
+                        x: Math.cos(angle) * size,
+                        y: Math.sin(angle) * size
                     });
                 }
 
+                ctx.beginPath();
                 if (HEX_CORNER_RADIUS > 0) {
-                    // Draw hexagon with rounded corners using arcTo
+                    const radius = HEX_CORNER_RADIUS * (size / this.size);
                     for (let i = 0; i < 6; i++) {
                         const curr = vertices[i];
                         const next = vertices[(i + 1) % 6];
                         if (i === 0) {
-                            // Start from midpoint of first edge
                             const prev = vertices[5];
                             const startX = prev.x + (curr.x - prev.x) * 0.5;
                             const startY = prev.y + (curr.y - prev.y) * 0.5;
                             ctx.moveTo(startX, startY);
-                            ctx.arcTo(curr.x, curr.y, next.x, next.y, HEX_CORNER_RADIUS);
+                            ctx.arcTo(curr.x, curr.y, next.x, next.y, radius);
                         } else {
-                            ctx.arcTo(curr.x, curr.y, next.x, next.y, HEX_CORNER_RADIUS);
+                            ctx.arcTo(curr.x, curr.y, next.x, next.y, radius);
                         }
                     }
                 } else {
-                    // Sharp corners
                     for (let i = 0; i < 6; i++) {
                         if (i === 0) {
                             ctx.moveTo(vertices[i].x, vertices[i].y);
@@ -555,6 +555,34 @@
                     }
                 }
                 ctx.closePath();
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                // Hex-shaped glow layers (same size, different lineWidth + blur)
+                if (this.glowIntensity > 0.5) {
+                    const glowLayers = [
+                        { lineWidth: 12, blur: 15, opacity: 0.15 },
+                        { lineWidth: 6, blur: 8, opacity: 0.25 },
+                        { lineWidth: 3, blur: 4, opacity: 0.35 }
+                    ];
+                    for (const layer of glowLayers) {
+                        this.drawHexPath(ctx, this.size);
+                        ctx.strokeStyle = `rgba(94, 231, 231, ${this.opacity * layer.opacity})`;
+                        ctx.lineWidth = layer.lineWidth;
+                        ctx.shadowColor = 'rgba(94, 231, 231, 1)';
+                        ctx.shadowBlur = layer.blur;
+                        ctx.stroke();
+                    }
+                    // Reset shadow
+                    ctx.shadowBlur = 0;
+                }
+
+                // Main hexagon
+                this.drawHexPath(ctx, this.size);
 
                 if (this.filled) {
                     ctx.fillStyle = `rgba(94, 231, 231, ${this.opacity * 0.15})`;
