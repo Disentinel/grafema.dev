@@ -495,28 +495,39 @@
                 this.targetLayer = layer;
             }
 
-            update(time) {
-                const parallaxX = (mouseX - width / 2) * this.parallaxFactor;
-                const parallaxY = (mouseY - height / 2) * this.parallaxFactor;
-
+            update(time, timeScale = 1, fancyEffects = false) {
                 const floatY = Math.sin(time * this.floatSpeed + this.floatOffset) * this.floatAmplitude;
                 const floatX = Math.cos(time * this.floatSpeed * 0.7 + this.floatOffset) * this.floatAmplitude * 0.5;
 
-                this.x = this.baseX + parallaxX + floatX;
-                this.y = this.baseY + parallaxY + floatY;
-                this.rotation += this.rotationSpeed;
+                // Parallax only if FPS allows
+                if (fancyEffects) {
+                    const parallaxX = (mouseX - width / 2) * this.parallaxFactor;
+                    const parallaxY = (mouseY - height / 2) * this.parallaxFactor;
+                    this.x = this.baseX + parallaxX + floatX;
+                    this.y = this.baseY + parallaxY + floatY;
+                } else {
+                    this.x = this.baseX + floatX;
+                    this.y = this.baseY + floatY;
+                }
 
-                const distToMouse = Math.hypot(this.x - mouseX, this.y - mouseY);
+                this.rotation += this.rotationSpeed * timeScale;
 
-                if (distToMouse < focusRadius) {
-                    this.targetLayer = 2;
-                } else if (distToMouse < focusRadius + focusTransitionRadius) {
-                    this.targetLayer = 1;
+                // Focus effect only if FPS allows
+                if (fancyEffects) {
+                    const distToMouse = Math.hypot(this.x - mouseX, this.y - mouseY);
+                    if (distToMouse < focusRadius) {
+                        this.targetLayer = 2;
+                    } else if (distToMouse < focusRadius + focusTransitionRadius) {
+                        this.targetLayer = 1;
+                    } else {
+                        this.targetLayer = this.layer;
+                    }
                 } else {
                     this.targetLayer = this.layer;
                 }
 
-                this.currentLayer += (this.targetLayer - this.currentLayer) * 0.1;
+                const layerLerp = 1 - Math.pow(0.9, timeScale);
+                this.currentLayer += (this.targetLayer - this.currentLayer) * layerLerp;
             }
 
             drawHexPath(ctx, size) {
@@ -577,7 +588,6 @@
                         ctx.shadowBlur = layer.blur;
                         ctx.stroke();
                     }
-                    // Reset shadow
                     ctx.shadowBlur = 0;
                 }
 
@@ -682,16 +692,44 @@
             ctx.clearRect(0, 0, width, height);
         }
 
+        // Adaptive frame timing and performance
+        let lastTime = 0;
+        let animTime = 0;
+        const targetFrameTime = 1000 / 60; // 60fps target
+
+        // FPS tracking for adaptive effects
+        let fpsHistory = [];
+        let avgFps = 60;
+        let enableFancyEffects = true;
+        const FPS_THRESHOLD = 45; // Below this, disable fancy effects
+
         function animate(time) {
+            // Calculate delta and adapt animation speed
+            const deltaTime = lastTime ? time - lastTime : targetFrameTime;
+            lastTime = time;
+
+            // Track FPS and adapt effects
+            const currentFps = 1000 / deltaTime;
+            fpsHistory.push(currentFps);
+            if (fpsHistory.length > 30) fpsHistory.shift(); // Keep last 30 frames
+            avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+            enableFancyEffects = avgFps > FPS_THRESHOLD;
+
+            // Scale animation by how much time actually passed vs target
+            const timeScale = Math.min(deltaTime / targetFrameTime, 3); // Cap at 3x to prevent jumps
+            animTime += targetFrameTime * timeScale;
+
             ctxBack.fillStyle = '#0a0f14';
             ctxBack.fillRect(0, 0, width, height);
             clearCanvas(ctxMid);
             clearCanvas(ctxSharp);
 
-            mouseX += (targetMouseX - mouseX) * 0.08;
-            mouseY += (targetMouseY - mouseY) * 0.08;
+            // Smooth mouse follow with adaptive timing
+            const mouseLerp = 1 - Math.pow(0.92, timeScale);
+            mouseX += (targetMouseX - mouseX) * mouseLerp;
+            mouseY += (targetMouseY - mouseY) * mouseLerp;
 
-            hexagons.forEach(hex => hex.update(time));
+            hexagons.forEach(hex => hex.update(animTime, timeScale, enableFancyEffects));
 
             // Draw back layer (blurred)
             drawConnections(ctxBack, 0);
