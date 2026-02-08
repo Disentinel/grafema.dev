@@ -1,0 +1,37 @@
+baseURL = "https://grafema.dev/blog/"
+languageCode = "en-us"
+title = "Grafema Blog"
+theme = "grafema"
+
+[permalinks]
+  posts = "/:slug/"
+
+[taxonomies]
+  tag = "tags"
+
+[markup]
+  [markup.highlight]
+    noClasses = false
+    lineNos = false
+    guessSyntax = true
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+    ordered = false
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = false
+
+[outputs]
+  home = ["HTML", "RSS"]
+
+[params]
+  description = "Engineering blog by the Grafema team — graph-driven code analysis, static analysis, and developer tooling."
+  author = "Vadim R"
+  ogImage = "https://grafema.dev/grafema_logo.png"
+
+enableRobotsTXT = true
+
+[sitemap]
+  changefreq = "weekly"
+  priority = 0.5

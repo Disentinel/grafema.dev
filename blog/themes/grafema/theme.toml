@@ -1,0 +1,7 @@
+name = "Grafema"
+license = "MIT"
+description = "Custom theme for the Grafema engineering blog"
+min_version = "0.120.0"
+
+[author]
+  name = "Vadim R"

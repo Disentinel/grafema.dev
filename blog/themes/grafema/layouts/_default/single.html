@@ -1,0 +1,32 @@
+{{ define "main" }}
+<article>
+    <div class="post-header">
+        {{ partial "post-meta.html" . }}
+        <h1>{{ .Title }}</h1>
+        {{ with .Description }}
+        <p class="description">{{ . }}</p>
+        {{ end }}
+        {{ with .Params.tags }}
+        <div class="tags">
+            {{ range . }}
+            <a href="{{ "tags/" | absURL }}{{ . | urlize }}/" class="tag">{{ . }}</a>
+            {{ end }}
+        </div>
+        {{ end }}
+    </div>
+
+    {{ if and .TableOfContents (gt (len .TableOfContents) 100) }}
+    <details class="toc" open>
+        <summary>Table of Contents</summary>
+        {{ .TableOfContents }}
+    </details>
+    {{ end }}
+
+    <div class="post-content">
+        {{ .Content }}
+    </div>
+
+    {{ partial "share-buttons.html" . }}
+    {{ partial "prev-next.html" . }}
+</article>
+{{ end }}

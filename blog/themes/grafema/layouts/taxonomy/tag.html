@@ -1,0 +1,33 @@
+{{ define "main" }}
+<div class="blog-header">
+    <h1>Tagged: {{ .Title }}</h1>
+</div>
+
+<div class="tag-filter">
+    <span>Showing {{ len .Pages }} post{{ if ne (len .Pages) 1 }}s{{ end }}</span>
+    <a href="{{ "tags/" | absURL }}" class="clear-filter">All tags</a>
+</div>
+
+{{ if .Pages }}
+<div class="post-list">
+    {{ range .Pages }}
+    <article class="post-card">
+        {{ partial "post-meta.html" . }}
+        <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
+        {{ if .Description }}
+            <p class="excerpt">{{ .Description }}</p>
+        {{ else }}
+            <p class="excerpt">{{ .Summary | plainify | truncate 200 }}</p>
+        {{ end }}
+        {{ with .Params.tags }}
+        <div class="tags">
+            {{ range . }}
+            <a href="{{ "tags/" | absURL }}{{ . | urlize }}/" class="tag">{{ . }}</a>
+            {{ end }}
+        </div>
+        {{ end }}
+    </article>
+    {{ end }}
+</div>
+{{ end }}
+{{ end }}
