@@ -9,7 +9,7 @@
         {{ with .Params.tags }}
         <div class="tags">
             {{ range . }}
-            <a href="{{ "tags/" | absURL }}{{ . | urlize }}/" class="tag">{{ . }}</a>
+            <a href="{{ "tags/" | absLangURL }}{{ . | urlize }}/" class="tag">{{ . }}</a>
             {{ end }}
         </div>
         {{ end }}
@@ -17,7 +17,7 @@
 
     {{ if and .TableOfContents (gt (len .TableOfContents) 100) }}
     <details class="toc" open>
-        <summary>Table of Contents</summary>
+        <summary>{{ i18n "toc" }}</summary>
         {{ .TableOfContents }}
     </details>
     {{ end }}

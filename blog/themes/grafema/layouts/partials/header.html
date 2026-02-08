@@ -11,6 +11,7 @@
         <span class="logo-text">grafema</span>
     </a>
     <nav>
-        <a href="/blog/">Blog</a>
+        <a href="{{ "blog/" | absLangURL }}">{{ i18n "blog_nav" }}</a>
+        {{- partial "lang-switcher.html" . -}}
     </nav>
 </header>

@@ -1,6 +1,6 @@
 {{ define "main" }}
 <div class="blog-header">
-    <h1>Engineering Blog</h1>
+    <h1>{{ i18n "blog_title" }}</h1>
     <p>{{ .Site.Params.description }}</p>
 </div>
 
@@ -19,7 +19,7 @@
         {{ with .Params.tags }}
         <div class="tags">
             {{ range . }}
-            <a href="{{ "tags/" | absURL }}{{ . | urlize }}/" class="tag">{{ . }}</a>
+            <a href="{{ "tags/" | absLangURL }}{{ . | urlize }}/" class="tag">{{ . }}</a>
             {{ end }}
         </div>
         {{ end }}

@@ -1,7 +1,25 @@
 baseURL = "https://grafema.dev/blog/"
-languageCode = "en-us"
 title = "Grafema Blog"
 theme = "grafema"
+
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir = false
+
+[languages]
+  [languages.en]
+    weight = 1
+    languageCode = "en-us"
+    languageName = "EN"
+    contentDir = "content/en"
+    [languages.en.params]
+      description = "Engineering blog by the Grafema team — graph-driven code analysis, static analysis, and developer tooling."
+  [languages.ru]
+    weight = 2
+    languageCode = "ru"
+    languageName = "RU"
+    contentDir = "content/ru"
+    [languages.ru.params]
+      description = "Инженерный блог команды Grafema — граф-ориентированный анализ кода, статический анализ и инструменты разработчика."
 
 [permalinks]
   posts = "/:slug/"
@@ -26,7 +44,6 @@ theme = "grafema"
   home = ["HTML", "RSS"]
 
 [params]
-  description = "Engineering blog by the Grafema team — graph-driven code analysis, static analysis, and developer tooling."
   author = "Vadim R"
   ogImage = "https://grafema.dev/grafema_logo.png"
 

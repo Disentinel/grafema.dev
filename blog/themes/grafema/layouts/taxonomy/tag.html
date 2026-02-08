@@ -1,11 +1,11 @@
 {{ define "main" }}
 <div class="blog-header">
-    <h1>Tagged: {{ .Title }}</h1>
+    <h1>{{ i18n "tagged" }}: {{ .Title }}</h1>
 </div>
 
 <div class="tag-filter">
-    <span>Showing {{ len .Pages }} post{{ if ne (len .Pages) 1 }}s{{ end }}</span>
-    <a href="{{ "tags/" | absURL }}" class="clear-filter">All tags</a>
+    <span>{{ i18n "showing_posts" (dict "Count" (len .Pages)) }}</span>
+    <a href="{{ "tags/" | absLangURL }}" class="clear-filter">{{ i18n "all_tags" }}</a>
 </div>
 
 {{ if .Pages }}
@@ -22,7 +22,7 @@
         {{ with .Params.tags }}
         <div class="tags">
             {{ range . }}
-            <a href="{{ "tags/" | absURL }}{{ . | urlize }}/" class="tag">{{ . }}</a>
+            <a href="{{ "tags/" | absLangURL }}{{ . | urlize }}/" class="tag">{{ . }}</a>
             {{ end }}
         </div>
         {{ end }}

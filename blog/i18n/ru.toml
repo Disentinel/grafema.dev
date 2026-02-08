@@ -1,0 +1,33 @@
+[blog_title]
+other = "Инженерный блог"
+
+[toc]
+other = "Содержание"
+
+[share]
+other = "Поделиться"
+
+[prev]
+other = "Назад"
+
+[next]
+other = "Далее"
+
+[tagged]
+other = "Тег"
+
+[all_tags]
+other = "Все теги"
+
+[tags_title]
+other = "Теги"
+
+[showing_posts]
+one = "{{ .Count }} публикация"
+other = "{{ .Count }} публикаций"
+
+[min_read]
+other = "мин чтения"
+
+[blog_nav]
+other = "Блог"

@@ -1,0 +1,33 @@
+[blog_title]
+other = "Engineering Blog"
+
+[toc]
+other = "Table of Contents"
+
+[share]
+other = "Share"
+
+[prev]
+other = "Previous"
+
+[next]
+other = "Next"
+
+[tagged]
+other = "Tagged"
+
+[all_tags]
+other = "All tags"
+
+[tags_title]
+other = "Tags"
+
+[showing_posts]
+one = "Showing {{ .Count }} post"
+other = "Showing {{ .Count }} posts"
+
+[min_read]
+other = "min read"
+
+[blog_nav]
+other = "Blog"
